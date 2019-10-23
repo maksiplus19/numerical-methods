@@ -7,7 +7,7 @@
 
 import numpy as np
 
-epsilon = 10 ** -10
+epsilon = 10 ** -5
 
 
 def f(x: float):  # изначальная функция
@@ -20,32 +20,40 @@ def ddx(x: float):  # производная
 
 def dichotomy(left: float, right: float):  # дихотомия
     x = (left + right) / 2
+    k = 0
     while abs(f(x)) > epsilon:
+        k += 1
         x = (left + right) / 2
         if f(x) * f(right) > 0:
             right = x
         else:
             left = x
-    return (left + right) / 2
+    return (left + right) / 2, k
 
 
 def relax(left: float, right: float):  # релаксация
     x, t, tau = 0, 0, 0
+    k = 0
     t = (left + right) / 2
     if ddx(left) < 0 and ddx(right) < 0:
         tau = 2 / abs(ddx(left) + ddx(right))
     elif ddx(left) > 0 and ddx(right) > 0:
         tau = -2 / abs(ddx(left) + ddx(right))
     while abs(f(t)) > epsilon:
+        k += 1
         x = t
         t = x + tau * f(x)
-    return t
+    return t, k
 
 
 print('Дихатомический метод')
-print(f'Первый корень = {dichotomy(0, 1)}')
-print(f'Второй корень = {dichotomy(1, 5)}')
+res = dichotomy(0, 1)
+print(f'Первый корень = {str(res[0])[:8]} Разбиений {res[1]}')
+res = dichotomy(1, 5)
+print(f'Второй корень = {str(res[0])[:8]} Разбиений {res[1]}')
 
 print('Метод релаксации')
-print(f'Первый корень = {relax(10 ** -6, 0.3)}')
-print(f'Второй корень = {relax(0.5, 5)}')
+res = relax(2 * 10 ** -3, 0.3)
+print(f'Первый корень = {str(res[0])[:8]} Итерации {res[1]}')
+res = relax(0.5, 5)
+print(f'Второй корень = {str(res[0])[:8]} Итерации {res[1]}')
