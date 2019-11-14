@@ -21,8 +21,8 @@ def gause_method(m: np.ndarray, c: np.ndarray):
     for i in range(m.shape[0]):
         for j in range(i + 1, m.shape[0]):
             # print(m[j][i])
-            c[j] -= c[i] * m[j][i]/m[i][i]
-            m[j] -= m[j][i]/m[i][i] * m[i]
+            c[j] -= c[i] * m[j][i] / m[i][i]
+            m[j] -= m[j][i] / m[i][i] * m[i]
     for i in range(m.shape[0]):
         c[i] /= m[i][i]
         m[i] /= m[i][i]
@@ -34,55 +34,46 @@ def gause_method(m: np.ndarray, c: np.ndarray):
     return x
 
 
-def fast_down(m, c, show_table=False):
-    epsilon = 10**-7
-
+def fast_down(m, c, epsilon):
     g: np.array = np.dot(m.transpose(), c)
     B: np.array = np.dot(m.transpose(), m)
+    # print(B, g, sep='\n')
     n = 0
-    x: List[np.array] = [np.random.randint(-10, 10, B.shape[0])]
+    x: List[np.array] = [np.zeros(B.shape[0])]
     r: List = [np.dot(B, x[0]) - g]
-
-    if show_table:
-        print('Итерации\t\t\tЗначения незвестных\t\t\t\t\t\t\t\t\t\tНевязка')
-    while (np.dot(r[n], r[n]) > epsilon and np.dot(x[0] - x[-1], x[0] - x[-1]) > epsilon) or n == 0:
-        tau = np.dot(r[n], r[n])/np.dot(np.dot(B, r[n]), r[n])
-        x.append(x[-1] - tau*r[-1])
+    # print(epsilon)
+    while n == 0 or not (np.sqrt(np.dot(r[-1], r[-1])) < epsilon and np.sqrt(np.dot(x[-1] - x[-2], x[-1] - x[-2])) < epsilon):
+        tau = np.dot(r[-1], r[-1]) / np.dot(np.dot(B, r[-1]), r[-1])
+        x.append(x[-1] - tau * r[-1])
         r.append(np.dot(B, x[-1]) - g)
-
-        if show_table:
-            print(f'{n}\t\t{x[-1]}\t{r[-1]}')
         n += 1
 
-    return x[-1]
+    return x[-1], n
 
 
-def conjugate_gradient(A, c, show_table=False):
+def conjugate_gradient(A, c, epsilon):
     A = np.array(copy(A))
     g = np.dot(A.transpose(), c)
     A = np.dot(A.transpose(), A)
 
-    x: List[np.array] = [np.random.randint(-10, 10, A.shape[0])]
+    x: List[np.array] = [np.zeros(A.shape[0])]
     r: List[np.array] = [g - np.dot(A, x[0])]
     z: List[np.array] = [r[0]]
 
     n = 0
-    while np.dot(r[-1], r[-1]) / np.dot(g, g) > 10**-7:
+    while np.sqrt(np.dot(r[-1], r[-1])) / np.sqrt(np.dot(g, g)) > epsilon:
         alpha = np.dot(r[-1], r[-1]) / np.dot(np.dot(A, z[-1]), z[-1])
-        x.append(x[-1] + alpha*z[-1])
-        r.append(r[-1] - alpha*np.dot(A, z[-1]))
+        x.append(x[-1] + alpha * z[-1])
+        r.append(r[-1] - alpha * np.dot(A, z[-1]))
         beta = np.dot(r[-1], r[-1]) / np.dot(r[-2], r[-2])
-        z.append(r[-1] + beta*z[-1])
-
-        if show_table:
-            print(f'{n}\t\t{x[-1]}\t{r[-1]}')
+        z.append(r[-1] + beta * z[-1])
         n += 1
 
-    return x[-1]
+    return x[-1], n
 
 
 if __name__ == '__main__':
     print('\t\t\t\t\tПравильный ответ\n', correct_res)
-    print('\t\t\t\t\tМетод Гауса\n', gause_method(matrix, coefficients))
-    print('\t\t\t\t\tМетод наискорейшего спуска\n', fast_down(matrix, coefficients))
-    print('\t\t\t\t\tМетод опорных градиентов\n', conjugate_gradient(matrix, coefficients))
+    for i in range(2, 8):
+        res = conjugate_gradient(matrix, coefficients, 10 ** -i)
+        print(f'{res[1]}\t {res[0]} {10 ** -i}')
